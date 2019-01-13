@@ -2,10 +2,13 @@ import telebot
 from telebot.types import Message
 import random
 from flask import Flask, request
+import os
 
 
 bot_token = '672782236:AAGoWrNm-TtgElTe8Lb5jLTJvgm4yVuk6Wo'
 bot = telebot.TeleBot(token=bot_token)
+server = Flask(__name__)
+
 picfile = 'pics.txt'
 audiofile = 'audio.txt'
 quotefile = 'quotes.txt'
@@ -41,8 +44,21 @@ def at_answer(message):
     quote = random.choice(qlines)
     bot.reply_to(message, quote)
 
-"""while True:
-    try:
-        bot.polling()
-    except Exception:
-        time.sleep(15)"""
+
+    
+
+@server.route('/' + TOKEN, methods=['POST'])
+def getMessage():
+    bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
+    return "!", 200
+
+
+@server.route("/")
+def webhook():
+    bot.remove_webhook()
+    bot.set_webhook(url='https://vast-stream-79139.herokuapp.com/' + TOKEN)
+    return "!", 200
+
+
+if __name__ == "__main__":
+    server.run(host="0.0.0.0", port=int(os.environ.get('PORT', 5000)))
